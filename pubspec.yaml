@@ -1,6 +1,5 @@
 name: aplikasipertama
 description: "A new Flutter project."
-
 publish_to: "none"
 
 version: 1.0.0+1
@@ -12,15 +11,21 @@ dependencies:
   flutter:
     sdk: flutter
 
+  # Flutter UI essentials
   cupertino_icons: ^1.0.8
+  provider: ^6.0.5
 
+  # UI & media
   carousel_slider: ^5.0.0
   font_awesome_flutter: ^10.0.0
+  image_picker: ^1.1.0
+
+  # Utility
+  uuid: ^4.4.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-
   flutter_lints: ^5.0.0
 
 flutter:
