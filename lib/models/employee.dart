@@ -1,10 +1,8 @@
-import 'package:flutter/material.dart';
-
 class Employee {
   final String id;
   String name;
   String role;
-  double salary;
+  double salary;     // gaji per bulan / shift sesuai kebutuhan
 
   Employee({
     required this.id,
@@ -13,10 +11,15 @@ class Employee {
     required this.salary,
   });
 
-  Employee copyWith({String? name, String? role, double? salary}) => Employee(
-    id: id,
-    name: name ?? this.name,
-    role: role ?? this.role,
-    salary: salary ?? this.salary,
-  );
+  Employee copyWith({
+    String? name,
+    String? role,
+    double? salary,
+  }) =>
+      Employee(
+        id: id,
+        name: name ?? this.name,
+        role: role ?? this.role,
+        salary: salary ?? this.salary,
+      );
 }

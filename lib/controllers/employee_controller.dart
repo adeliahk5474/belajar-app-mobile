@@ -1,10 +1,9 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 import '../models/employee.dart';
 
 class EmployeeController extends ChangeNotifier {
-  final _employees = <Employee>[];
-
+  final List<Employee> _employees = [];
   List<Employee> get items => List.unmodifiable(_employees);
 
   void add({required String name, required String role, required double salary}) {
@@ -17,10 +16,10 @@ class EmployeeController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void update(Employee updated) {
-    final i = _employees.indexWhere((e) => e.id == updated.id);
+  void update(Employee e) {
+    final i = _employees.indexWhere((v) => v.id == e.id);
     if (i != -1) {
-      _employees[i] = updated;
+      _employees[i] = e;
       notifyListeners();
     }
   }

@@ -6,11 +6,11 @@ import 'controllers/order_controller.dart';
 import 'controllers/employee_controller.dart';
 
 import 'screens/login_page.dart';
-import 'screens/inventory_page.dart';
-import 'screens/order_page.dart';
-import 'screens/employee_page.dart';
+import 'screens/root_page.dart';
 
-void main() => runApp(const MyApp());
+void main() {
+  runApp(const MyApp());
+}
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -20,12 +20,20 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => InventoryController()),
-        ChangeNotifierProvider(create: (_) => OrderController()),
+        ChangeNotifierProxyProvider<InventoryController, OrderController>(
+          create: (_) => OrderController(_.read<InventoryController>()),
+          update: (_, inventory, orderController) =>
+              orderController!..inventory,
+        ),
         ChangeNotifierProvider(create: (_) => EmployeeController()),
       ],
       child: MaterialApp(
+        debugShowCheckedModeBanner: false,
         title: 'UMKM App',
-        theme: ThemeData(useMaterial3: true),
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
+          useMaterial3: true,
+        ),
         home: const LoginPage(),
       ),
     );
