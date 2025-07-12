@@ -29,4 +29,20 @@ class Employee {
     imagePath: imagePath ?? this.imagePath,
     imageUrl: imageUrl ?? this.imageUrl,
   );
+
+  Map<String, dynamic> toMap() => {
+    'id': id,
+    'name': name,
+    'role': role,
+    'salary': salary,
+    'imageUrl': imageUrl,
+  };
+
+  factory Employee.fromMap(Map<String, dynamic> m) => Employee(
+    id: m['id'],
+    name: m['name'],
+    role: m['role'],
+    salary: (m['salary'] as num).toDouble(),
+    imageUrl: m['imageUrl'],
+  );
 }

@@ -1,4 +1,5 @@
 import 'recipe_item.dart';
+import 'dart:convert';
 
 class Product {
   final String id;
@@ -57,4 +58,49 @@ class Product {
   /// factory helper untuk membuat produk kosong (fallback)
   static Product empty() =>
       Product(id: '', name: '', category: '', unit: '', price: 0, stockQty: 0);
+}
+
+extension ProductMapper on Product {
+  Map<String, dynamic> toMap() => {
+    'id': id,
+    'name': name,
+    'category': category,
+    'unit': unit,
+    'price': price,
+    'stockQty': stockQty,
+    'minStock': minStock,
+    'cloudStockQty': cloudStockQty,
+    'imageUrl': imageUrl,
+    'recipeJson':
+        recipe == null
+            ? null
+            : jsonEncode(
+              recipe!
+                  .map((e) => {'inventoryId': e.inventoryId, 'qty': e.qty})
+                  .toList(),
+            ),
+    'imagePath': imagePath,
+  };
+
+  static Product fromMap(Map<String, dynamic> map) => Product(
+    id: map['id'],
+    name: map['name'],
+    category: map['category'],
+    unit: map['unit'],
+    price: (map['price'] as num).toDouble(),
+    stockQty: map['stockQty'],
+    minStock: map['minStock'] ?? 0,
+    cloudStockQty: map['cloudStockQty'],
+    imageUrl: map['imageUrl'],
+    recipe:
+        map['recipeJson'] == null
+            ? null
+            : (jsonDecode(map['recipeJson']) as List)
+                .map(
+                  (e) =>
+                      RecipeItem(inventoryId: e['inventoryId'], qty: e['qty']),
+                )
+                .toList(),
+    imagePath: map['imagePath'],
+  );
 }

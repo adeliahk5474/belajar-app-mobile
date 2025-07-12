@@ -1,15 +1,31 @@
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
+
+import '../dao/product_dao.dart'; // DAO → SQLite
 import '../models/product.dart';
 import '../models/recipe_item.dart';
 
 class InventoryController extends ChangeNotifier {
-  final List<Product> _items = [];
+  final ProductDao _dao = ProductDao();
 
+  final List<Product> _items = [];
   List<Product> get items => List.unmodifiable(_items);
 
-  // ──────────────────── tambah produk lokal
-  void addRaw({
+  // ───────────────────────────── init: load sekali dari DB
+  InventoryController() {
+    _loadFromDB();
+  }
+
+  Future<void> _loadFromDB() async {
+    _items
+      ..clear()
+      ..addAll(await _dao.fetchAll());
+    notifyListeners();
+  }
+
+  // ───────────────────────────── CRUD
+
+  Future<void> addRaw({
     required String name,
     required String category,
     required String unit,
@@ -18,31 +34,31 @@ class InventoryController extends ChangeNotifier {
     int minStock = 0,
     int? cloudStockQty,
     String? imageUrl,
-  }) {
-    _items.add(
-      Product(
-        id: const Uuid().v4(),
-        name: name,
-        category: category,
-        unit: unit,
-        price: price,
-        stockQty: stockQty,
-        minStock: minStock,
-        cloudStockQty: cloudStockQty,
-        imageUrl: imageUrl,
-      ),
+  }) async {
+    final p = Product(
+      id: const Uuid().v4(),
+      name: name,
+      category: category,
+      unit: unit,
+      price: price,
+      stockQty: stockQty,
+      minStock: minStock,
+      cloudStockQty: cloudStockQty,
+      imageUrl: imageUrl,
     );
-    notifyListeners();
-  }
-
-  // ──────────────────── tambah produk yang sudah jadi (NewProductPage)
-  void addFull(Product p) {
+    await _dao.insert(p);
     _items.add(p);
     notifyListeners();
   }
 
-  // ──────────────────── update (nama, stok, gambar, dll)
-  void update(Product p) {
+  Future<void> addFull(Product p) async {
+    await _dao.insert(p);
+    _items.add(p);
+    notifyListeners();
+  }
+
+  Future<void> update(Product p) async {
+    await _dao.update(p);
     final i = _items.indexWhere((e) => e.id == p.id);
     if (i != -1) {
       _items[i] = p;
@@ -50,18 +66,21 @@ class InventoryController extends ChangeNotifier {
     }
   }
 
-  void remove(String id) {
+  Future<void> remove(String id) async {
+    await _dao.delete(id);
     _items.removeWhere((e) => e.id == id);
     notifyListeners();
   }
 
-  // ──────────────────── stok lokal
-  bool adjustStock(String id, int delta) {
+  // ───────────────────────────── stok lokal
+  Future<bool> adjustStock(String id, int delta) async {
     final i = _items.indexWhere((e) => e.id == id);
     if (i == -1) return false;
     final newQty = _items[i].stockQty + delta;
     if (newQty < 0) return false;
-    _items[i].stockQty = newQty;
+    final updated = _items[i].copyWith(stockQty: newQty);
+    await _dao.update(updated);
+    _items[i] = updated;
     notifyListeners();
     return true;
   }
@@ -69,31 +88,34 @@ class InventoryController extends ChangeNotifier {
   bool hasEnoughStock(String id, int qty) =>
       _items.firstWhere((e) => e.id == id).stockQty >= qty;
 
-  // ──────────────────── stok bahan untuk menu
-  bool consumeRecipe(List<RecipeItem> recipe, int totalQty) {
+  // ───────────────────────────── stok bahan untuk menu
+  Future<bool> consumeRecipe(List<RecipeItem> recipe, int totalQty) async {
     for (final r in recipe) {
       if (!hasEnoughStock(r.inventoryId, r.qty * totalQty)) return false;
     }
     for (final r in recipe) {
-      adjustStock(r.inventoryId, -r.qty * totalQty);
+      await adjustStock(r.inventoryId, -r.qty * totalQty);
     }
     return true;
   }
 
-  // ──────────────────── (opsional) set image/url sesudah upload
-  void setImage(String productId, String imageUrl) {
+  // ───────────────────────────── setter gambar / cloud stock
+  Future<void> setImage(String productId, String imageUrl) async {
     final i = _items.indexWhere((p) => p.id == productId);
     if (i != -1) {
-      _items[i] = _items[i].copyWith(imageUrl: imageUrl);
+      final updated = _items[i].copyWith(imageUrl: imageUrl);
+      await _dao.update(updated);
+      _items[i] = updated;
       notifyListeners();
     }
   }
 
-  // ──────────────────── (opsional) sync cloud stock
-  void updateCloudStock(String productId, int cloudQty) {
+  Future<void> updateCloudStock(String productId, int cloudQty) async {
     final i = _items.indexWhere((p) => p.id == productId);
     if (i != -1) {
-      _items[i] = _items[i].copyWith(cloudStockQty: cloudQty);
+      final updated = _items[i].copyWith(cloudStockQty: cloudQty);
+      await _dao.update(updated);
+      _items[i] = updated;
       notifyListeners();
     }
   }

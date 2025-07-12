@@ -11,21 +11,17 @@ dependencies:
   flutter:
     sdk: flutter
 
-  # Flutter UI essentials
+  sqflite: ^2.3.2
+  path_provider: ^2.1.3
   cupertino_icons: ^1.0.8
   provider: ^6.0.5
-
-  # UI & media
   carousel_slider: ^5.0.0
   font_awesome_flutter: ^10.0.0
   image_picker: ^1.1.0
-
   firebase_core: ^2.27.0
   firebase_storage: ^11.6.0
-
-  # Utility
   uuid: ^4.4.0
-  js: ^0.6.7
+  js: ^0.7.2
 
 dev_dependencies:
   flutter_test:
