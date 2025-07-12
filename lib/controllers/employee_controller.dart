@@ -11,17 +11,24 @@ class EmployeeController extends ChangeNotifier {
     required String name,
     required String role,
     required double salary,
-    String? imagePath,   // ← jalur lokal jika user pilih foto
-    String? imageUrl,    // ← url cloud kalau nanti di‑upload
+    String? imagePath, // ← jalur lokal jika user pilih foto
+    String? imageUrl, // ← url cloud kalau nanti di‑upload
   }) {
-    _employees.add(Employee(
-      id: const Uuid().v4(),
-      name: name,
-      role: role,
-      salary: salary,
-      imagePath: imagePath,
-      imageUrl: imageUrl,
-    ));
+    _employees.add(
+      Employee(
+        id: const Uuid().v4(),
+        name: name,
+        role: role,
+        salary: salary,
+        imagePath: imagePath,
+        imageUrl: imageUrl,
+      ),
+    );
+    notifyListeners();
+  }
+
+  void remove(String id) {
+    _employees.removeWhere((e) => e.id == id);
     notifyListeners();
   }
 

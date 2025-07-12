@@ -34,9 +34,9 @@ class _OrderPageState extends State<OrderPage> {
     final orderCtrl = ctx.read<OrderController>();
     final id = const Uuid().v4();
     orderCtrl.addNew('Pembeli'); // nama default, bisa pakai dialog
-    _cart.values.forEach((item) {
+    for (var item in _cart.values) {
       orderCtrl.addItem(id, item);
-    });
+    }
     setState(() => _cart.clear());
     ScaffoldMessenger.of(
       ctx,

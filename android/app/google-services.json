@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "315093354708",
+    "project_id": "umkm-app-10478",
+    "storage_bucket": "umkm-app-10478.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:315093354708:android:e574ee7583e78262539341",
+        "android_client_info": {
+          "package_name": "com.example.aplikasipertama"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDjgv_WaJnazQxUKjbsknR0S3TNIMywCkA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:315093354708:android:72bb8881ff518980539341",
+        "android_client_info": {
+          "package_name": "com.example.umkmapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDjgv_WaJnazQxUKjbsknR0S3TNIMywCkA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
