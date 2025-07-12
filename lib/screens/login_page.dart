@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import '../controllers/login_controller.dart';
 import 'home_page.dart';
 
-class LoginPage extends StatelessWidget {
+class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
-  
+
   @override
   State<LoginPage> createState() => _LoginPageState();
 }
@@ -28,18 +28,18 @@ class _LoginPageState extends State<LoginPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             TextField(
-              controller: usernameController,
+              controller: loginController.usernameController,
               decoration: InputDecoration(labelText: 'Username'),
             ),
             TextField(
-              controller: passwordController,
+              controller: loginController.passwordController,
               decoration: InputDecoration(labelText: 'Password'),
               obscureText: true,
             ),
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                String username = usernameController.text;
+                String username = loginController.username;
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(

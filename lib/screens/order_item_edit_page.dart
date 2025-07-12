@@ -14,18 +14,21 @@ class _OrderItemEditPageState extends State<OrderItemEditPage> {
   late final priceCtl = TextEditingController(
     text: widget.item.unitPrice.toStringAsFixed(0),
   );
+  late final noteCtl = TextEditingController(text: widget.item.note ?? '');
 
   @override
   void dispose() {
     qtyCtl.dispose();
     priceCtl.dispose();
+    noteCtl.dispose();
     super.dispose();
   }
 
   void _save() {
     final updated = widget.item.copyWith(
-      qty: int.tryParse(qtyCtl.text) ?? widget.item.qty,
-      unitPrice: double.tryParse(priceCtl.text) ?? widget.item.unitPrice,
+      qty: int.tryParse(qtyCtl.text) ?? 0,
+      unitPrice: double.tryParse(priceCtl.text) ?? 0,
+      note: noteCtl.text,
     );
     Navigator.pop(context, updated);
   }
@@ -34,28 +37,26 @@ class _OrderItemEditPageState extends State<OrderItemEditPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Edit Item Order')),
-      body: Padding(
+      body: ListView(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Text(
-              'Produk ID: ${widget.item.productId}',
-              style: const TextStyle(fontSize: 16),
-            ),
-            TextField(
-              controller: qtyCtl,
-              decoration: const InputDecoration(labelText: 'Jumlah (Qty)'),
-              keyboardType: TextInputType.number,
-            ),
-            TextField(
-              controller: priceCtl,
-              decoration: const InputDecoration(labelText: 'Harga per Unit'),
-              keyboardType: TextInputType.number,
-            ),
-            const Spacer(),
-            ElevatedButton(onPressed: _save, child: const Text('Simpan')),
-          ],
-        ),
+        children: [
+          TextField(
+            controller: qtyCtl,
+            decoration: const InputDecoration(labelText: 'Qty'),
+            keyboardType: TextInputType.number,
+          ),
+          TextField(
+            controller: priceCtl,
+            decoration: const InputDecoration(labelText: 'Harga Satuan'),
+            keyboardType: TextInputType.number,
+          ),
+          TextField(
+            controller: noteCtl,
+            decoration: const InputDecoration(labelText: 'Catatan'),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton(onPressed: _save, child: const Text('Simpan')),
+        ],
       ),
     );
   }

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
@@ -15,7 +16,7 @@ class NewProductPage extends StatefulWidget {
 }
 
 class _NewProductPageState extends State<NewProductPage> {
-  final _nameCtl  = TextEditingController();
+  final _nameCtl = TextEditingController();
   final _priceCtl = TextEditingController();
   XFile? _pickedImage;
 
@@ -35,41 +36,56 @@ class _NewProductPageState extends State<NewProductPage> {
 
     await showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Tambah Bahan'),
-        content: Column(mainAxisSize: MainAxisSize.min, children: [
-          DropdownButtonFormField<String>(
-            items: inv
-                .map((p) => DropdownMenuItem(value: p.id, child: Text(p.name)))
-                .toList(),
-            onChanged: (v) => selectedId = v,
-            decoration: const InputDecoration(labelText: 'Pilih bahan'),
-          ),
-          TextField(
-            controller: qtyCtl,
-            keyboardType: TextInputType.number,
-            decoration: const InputDecoration(labelText: 'Qty per produk'),
-          ),
-        ]),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
-          ElevatedButton(
-            onPressed: () {
-              if (selectedId != null) {
-                _ingredients.add(
-                  RecipeItem(
-                    inventoryId: selectedId!,
-                    qty: int.tryParse(qtyCtl.text) ?? 0,
+      builder:
+          (_) => AlertDialog(
+            title: const Text('Tambah Bahan'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                DropdownButtonFormField<String>(
+                  items:
+                      inv
+                          .map(
+                            (p) => DropdownMenuItem(
+                              value: p.id,
+                              child: Text(p.name),
+                            ),
+                          )
+                          .toList(),
+                  onChanged: (v) => selectedId = v,
+                  decoration: const InputDecoration(labelText: 'Pilih bahan'),
+                ),
+                TextField(
+                  controller: qtyCtl,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Qty per produk',
                   ),
-                );
-                setState(() {});
-              }
-              Navigator.pop(context);
-            },
-            child: const Text('Tambah'),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Batal'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  if (selectedId != null) {
+                    _ingredients.add(
+                      RecipeItem(
+                        inventoryId: selectedId!,
+                        qty: int.tryParse(qtyCtl.text) ?? 0,
+                      ),
+                    );
+                    setState(() {});
+                  }
+                  Navigator.pop(context);
+                },
+                child: const Text('Tambah'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
@@ -78,21 +94,21 @@ class _NewProductPageState extends State<NewProductPage> {
     if (_nameCtl.text.trim().isEmpty ||
         _priceCtl.text.trim().isEmpty ||
         _ingredients.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Lengkapi semua data')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Lengkapi semua data')));
       return;
     }
 
     final product = Product(
       id: const Uuid().v4(),
       name: _nameCtl.text,
-      category: 'Menu',        // sesuaikan kebutuhan
+      category: 'Menu', // sesuaikan kebutuhan
       unit: 'pcs',
       price: double.tryParse(_priceCtl.text) ?? 0,
-      stockQty: 0,             // stok dihitung dari bahan, bukan di sini
+      stockQty: 0, // stok dihitung dari bahan, bukan di sini
       minStock: 0,
-      recipe: _ingredients,    // field opsional yang kamu tambahkan
+      recipe: _ingredients, // field opsional yang kamu tambahkan
       imagePath: _pickedImage?.path,
     );
 
@@ -118,26 +134,37 @@ class _NewProductPageState extends State<NewProductPage> {
         children: [
           GestureDetector(
             onTap: _pickImage,
-            child: _pickedImage == null
-                ? Container(
-                    height: 150,
-                    color: Colors.grey.shade300,
-                    alignment: Alignment.center,
-                    child: const Text('Tap untuk pilih gambar'),
-                  )
-                : Image.file(
-                    File(_pickedImage!.path),
-                    height: 150,
-                    fit: BoxFit.cover,
-                  ),
+            child:
+                _pickedImage == null
+                    ? Container(
+                      height: 150,
+                      color: Colors.grey.shade300,
+                      alignment: Alignment.center,
+                      child: const Text('Tap untuk pilih gambar'),
+                    )
+                    : Image.file(
+                      File(_pickedImage!.path),
+                      height: 150,
+                      fit: BoxFit.cover,
+                    ),
           ),
           const SizedBox(height: 16),
-          TextField(controller: _nameCtl,  decoration: const InputDecoration(labelText: 'Nama produk')),
-          TextField(controller: _priceCtl, decoration: const InputDecoration(labelText: 'Harga jual'), keyboardType: TextInputType.number),
+          TextField(
+            controller: _nameCtl,
+            decoration: const InputDecoration(labelText: 'Nama produk'),
+          ),
+          TextField(
+            controller: _priceCtl,
+            decoration: const InputDecoration(labelText: 'Harga jual'),
+            keyboardType: TextInputType.number,
+          ),
           const SizedBox(height: 16),
           Row(
             children: [
-              const Text('Bahan:', style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text(
+                'Bahan:',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               const Spacer(),
               TextButton.icon(
                 onPressed: inv.isEmpty ? null : _addIngredientDialog,

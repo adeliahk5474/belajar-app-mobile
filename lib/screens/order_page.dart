@@ -5,129 +5,124 @@ import '../controllers/order_controller.dart';
 import '../controllers/inventory_controller.dart';
 import '../models/order.dart';
 import '../models/product.dart';
+import '../models/order_item.dart';
 
-import 'order_edit_page.dart';
-import 'new_product_page.dart';   // ← halaman tambah produk/menu
+import 'order_item_edit_page.dart';
+import 'new_product_page.dart';
 
 class OrderPage extends StatelessWidget {
   const OrderPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final orderCtrl = context.watch<OrderController>();
+    final orders = context.watch<OrderController>().items;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Manajemen Order'),
         actions: [
-          // Tombol NEW PRODUCT / MENU di sudut kanan app‑bar
           TextButton.icon(
             icon: const Icon(Icons.add, color: Colors.white),
-            label: const Text('New Product', style: TextStyle(color: Colors.white)),
+            label: const Text(
+              'New Product',
+              style: TextStyle(color: Colors.white),
+            ),
             onPressed: () async {
               final newProduct = await Navigator.push<Product>(
                 context,
                 MaterialPageRoute(builder: (_) => const NewProductPage()),
               );
               if (newProduct != null) {
-                // tambahkan ke inventory
                 context.read<InventoryController>().addFull(newProduct);
               }
             },
           ),
         ],
       ),
-      body: orderCtrl.items.isEmpty
-          ? const Center(child: Text('Belum ada order'))
-          : ListView.builder(
-              itemCount: orderCtrl.items.length,
-              itemBuilder: (_, i) {
-                final o = orderCtrl.items[i];
-                return ListTile(
-                  title: Text(o.note),
-                  subtitle: Text(
-                      '${o.qty} × Rp${o.price.toStringAsFixed(0)} = Rp${o.total.toStringAsFixed(0)}'),
-                  onTap: () => _showMenu(context, o),
-                );
-              },
-            ),
+      body:
+          orders.isEmpty
+              ? const Center(child: Text('Belum ada order'))
+              : ListView.builder(
+                itemCount: orders.length,
+                itemBuilder: (_, i) {
+                  final order = orders[i];
+                  return ExpansionTile(
+                    title: Text('Pelanggan: ${order.customer}'),
+                    subtitle: Text(
+                      'Total: Rp${order.total.toStringAsFixed(0)}',
+                    ),
+                    children:
+                        order.items.map((item) {
+                          return ListTile(
+                            title: Text('Produk: ${item.productId}'),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (item.note.isNotEmpty)
+                                  Text('Catatan: ${item.note}'),
+                                Text(
+                                  '${item.qty} × Rp${item.unitPrice.toStringAsFixed(0)} = Rp${item.subtotal.toStringAsFixed(0)}',
+                                ),
+                              ],
+                            ),
+                            trailing: IconButton(
+                              icon: const Icon(Icons.edit),
+                              onPressed: () async {
+                                final updatedItem =
+                                    await Navigator.push<OrderItem>(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder:
+                                            (_) =>
+                                                OrderItemEditPage(item: item),
+                                      ),
+                                    );
+                                if (updatedItem != null) {
+                                  context.read<OrderController>().updateItem(
+                                    order.id,
+                                    updatedItem,
+                                  );
+                                }
+                              },
+                            ),
+                          );
+                        }).toList(),
+                  );
+                },
+              ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddDialog(context),
+        onPressed: () => _addOrderDialog(context),
         child: const Icon(Icons.add),
       ),
     );
   }
 
-  // ───────────────────────────── dialog tambah order
-  void _showAddDialog(BuildContext ctx) {
-    final noteCtl  = TextEditingController();
-    final qtyCtl   = TextEditingController(text: '1');
-    final priceCtl = TextEditingController();
+  void _addOrderDialog(BuildContext context) {
+    final customerCtl = TextEditingController();
 
     showDialog(
-      context: ctx,
-      builder: (_) => AlertDialog(
-        title: const Text('Tambah Order'),
-        content: Column(mainAxisSize: MainAxisSize.min, children: [
-          TextField(
-              controller: noteCtl,
-              decoration: const InputDecoration(labelText: 'Keterangan')),
-          TextField(
-              controller: qtyCtl,
-              decoration: const InputDecoration(labelText: 'Qty'),
-              keyboardType: TextInputType.number),
-          TextField(
-              controller: priceCtl,
-              decoration: const InputDecoration(labelText: 'Harga'),
-              keyboardType: TextInputType.number),
-        ]),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
-          ElevatedButton(
-            onPressed: () {
-              ctx.read<OrderController>().add(
-                    note: noteCtl.text,
-                    qty: int.tryParse(qtyCtl.text) ?? 0,
-                    price: double.tryParse(priceCtl.text) ?? 0,
-                  );
-              Navigator.pop(ctx);
-            },
-            child: const Text('Simpan'),
+      context: context,
+      builder:
+          (_) => AlertDialog(
+            title: const Text('Tambah Order Baru'),
+            content: TextField(
+              controller: customerCtl,
+              decoration: const InputDecoration(labelText: 'Nama Pelanggan'),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Batal'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  context.read<OrderController>().addNew(customerCtl.text);
+                  Navigator.pop(context);
+                },
+                child: const Text('Simpan'),
+              ),
+            ],
           ),
-        ],
-      ),
-    );
-  }
-
-  // ───────────────────────────── menu bottom‑sheet
-  void _showMenu(BuildContext ctx, Order o) {
-    showModalBottomSheet(
-      context: ctx,
-      builder: (_) => SafeArea(
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          ListTile(
-            leading: const Icon(Icons.edit),
-            title: const Text('Edit'),
-            onTap: () async {
-              Navigator.pop(ctx);
-              final updated = await Navigator.push<Order>(
-                ctx,
-                MaterialPageRoute(builder: (_) => OrderEditPage(order: o)),
-              );
-              if (updated != null) ctx.read<OrderController>().update(updated);
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.delete, color: Colors.red),
-            title: const Text('Hapus'),
-            onTap: () {
-              ctx.read<OrderController>().remove(o.id);
-              Navigator.pop(ctx);
-            },
-          ),
-        ]),
-      ),
     );
   }
 }

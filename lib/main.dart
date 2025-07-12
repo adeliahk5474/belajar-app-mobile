@@ -6,11 +6,8 @@ import 'controllers/order_controller.dart';
 import 'controllers/employee_controller.dart';
 
 import 'screens/login_page.dart';
-import 'screens/root_page.dart';
 
-void main() {
-  runApp(const MyApp());
-}
+void main() => runApp(const MyApp());
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -19,12 +16,14 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        // Inventory harus dibuat lebih dulu
         ChangeNotifierProvider(create: (_) => InventoryController()),
-        ChangeNotifierProxyProvider<InventoryController, OrderController>(
-          create: (_) => OrderController(_.read<InventoryController>()),
-          update: (_, inventory, orderController) =>
-              orderController!..inventory,
+
+        // OrderController butuh InventoryController di constructor
+        ChangeNotifierProvider(
+          create: (ctx) => OrderController(ctx.read<InventoryController>()),
         ),
+
         ChangeNotifierProvider(create: (_) => EmployeeController()),
       ],
       child: MaterialApp(

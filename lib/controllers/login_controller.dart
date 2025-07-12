@@ -11,5 +11,4 @@ class LoginController {
     usernameController.dispose();
     passwordController.dispose();
   }
-
 }

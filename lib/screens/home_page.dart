@@ -1,9 +1,8 @@
+import 'package:aplikasipertama/screens/employee_page.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
 import '../screens/inventory_page.dart';
 import '../screens/order_page.dart';
-import '../screens/employee_page.dart';
 
 class HomePage extends StatefulWidget {
   final String username;
@@ -37,19 +36,22 @@ class _HomePageState extends State<HomePage>
         actions: [
           IconButton(
             icon: const Icon(Icons.person),
-            onPressed: () => showDialog(
-              context: context,
-              builder: (_) => AlertDialog(
-                title: const Text('User Info'),
-                content: Text('Logged in as: ${widget.username}'),
-                actions: [
-                  TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('OK')),
-                ],
-              ),
-            ),
-          )
+            onPressed:
+                () => showDialog(
+                  context: context,
+                  builder:
+                      (_) => AlertDialog(
+                        title: const Text('User Info'),
+                        content: Text('Logged in as: ${widget.username}'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('OK'),
+                          ),
+                        ],
+                      ),
+                ),
+          ),
         ],
         bottom: TabBar(
           controller: _tab,
@@ -62,11 +64,7 @@ class _HomePageState extends State<HomePage>
       ),
       body: TabBarView(
         controller: _tab,
-        children: const [
-          InventoryPage(),
-          OrderPage(),
-          EmployeePage(),
-        ],
+        children: const [InventoryPage(), OrderPage(), EmployeePage()],
       ),
     );
   }
