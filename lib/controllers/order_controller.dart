@@ -67,7 +67,9 @@ class OrderController extends ChangeNotifier {
       item.productId,
       item.qty,
       item.unitPrice,
+      '', // ← tambahkan argumen `note`, isi kosong jika tidak ada
     );
+
     order.items.add(item);
     notifyListeners();
     return true;
