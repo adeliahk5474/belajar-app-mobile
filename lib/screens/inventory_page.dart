@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../controllers/inventory_controller.dart';
 import '../models/product.dart';
 import 'inventory_edit_page.dart';
+import '../widgets/product_card.dart';
 
 class InventoryPage extends StatelessWidget {
   const InventoryPage({super.key});
@@ -21,12 +22,8 @@ class InventoryPage extends StatelessWidget {
                 itemCount: controller.items.length,
                 itemBuilder: (_, i) {
                   final p = controller.items[i];
-                  return ListTile(
-                    title: Text(p.name),
-                    subtitle: Text(
-                      'Stok: ${p.stockQty} ${p.unit} • Harga: Rp${p.price.toStringAsFixed(0)}',
-                    ),
-                    trailing: Text(p.category),
+                  return ProductCard(
+                    product: p,
                     onTap: () => _showOptions(context, p),
                   );
                 },
@@ -38,7 +35,6 @@ class InventoryPage extends StatelessWidget {
     );
   }
 
-  // ───────────────────────── tambah produk
   void _showAddDialog(BuildContext ctx) {
     final nameCtl = TextEditingController();
     final categoryCtl = TextEditingController();
@@ -114,7 +110,6 @@ class InventoryPage extends StatelessWidget {
     );
   }
 
-  // ───────────────────────── opsi item
   void _showOptions(BuildContext ctx, Product p) {
     showModalBottomSheet(
       context: ctx,

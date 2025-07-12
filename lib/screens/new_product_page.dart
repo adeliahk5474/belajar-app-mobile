@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 import '../models/product.dart';
 import '../models/recipe_item.dart';
@@ -20,12 +21,21 @@ class _NewProductPageState extends State<NewProductPage> {
   final _priceCtl = TextEditingController();
   XFile? _pickedImage;
 
-  final _ingredients = <RecipeItem>[]; // daftar bahan + qty
+  final _ingredients = <RecipeItem>[];
 
   // ───────────────────────────────── image picker
   Future<void> _pickImage() async {
     final img = await ImagePicker().pickImage(source: ImageSource.gallery);
     if (img != null) setState(() => _pickedImage = img);
+  }
+
+  // ───────────────────────────────── upload image ke firebase
+  Future<String?> _uploadImageToFirebase(String productId) async {
+    if (_pickedImage == null) return null;
+    final file = File(_pickedImage!.path);
+    final ref = FirebaseStorage.instance.ref().child('products/$productId.jpg');
+    await ref.putFile(file);
+    return await ref.getDownloadURL();
   }
 
   // ───────────────────────────────── tambah bahan
@@ -90,7 +100,7 @@ class _NewProductPageState extends State<NewProductPage> {
   }
 
   // ───────────────────────────────── simpan produk baru
-  void _save() {
+  Future<void> _save() async {
     if (_nameCtl.text.trim().isEmpty ||
         _priceCtl.text.trim().isEmpty ||
         _ingredients.isEmpty) {
@@ -100,16 +110,20 @@ class _NewProductPageState extends State<NewProductPage> {
       return;
     }
 
+    final id = const Uuid().v4();
+    final imageUrl = await _uploadImageToFirebase(id);
+
     final product = Product(
-      id: const Uuid().v4(),
+      id: id,
       name: _nameCtl.text,
-      category: 'Menu', // sesuaikan kebutuhan
+      category: 'Menu',
       unit: 'pcs',
       price: double.tryParse(_priceCtl.text) ?? 0,
-      stockQty: 0, // stok dihitung dari bahan, bukan di sini
+      stockQty: 0,
       minStock: 0,
-      recipe: _ingredients, // field opsional yang kamu tambahkan
+      recipe: _ingredients,
       imagePath: _pickedImage?.path,
+      imageUrl: imageUrl,
     );
 
     Navigator.pop(context, product);
@@ -178,9 +192,7 @@ class _NewProductPageState extends State<NewProductPage> {
             return ListTile(
               title: Text(p.name),
               trailing: Text('${r.qty} ${p.unit}'),
-              onLongPress: () {
-                setState(() => _ingredients.remove(r));
-              },
+              onLongPress: () => setState(() => _ingredients.remove(r)),
             );
           }),
           const SizedBox(height: 24),

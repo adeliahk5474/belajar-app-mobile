@@ -1,22 +1,34 @@
 class OrderItem {
-  final String productId; // ID produk (mengacu ke model Product)
-  String note; // Catatan tambahan (opsional)
-  int qty; // Jumlah
-  double unitPrice; // Harga per unit
+  final String productId;
+  int qty;
+  double unitPrice;
+  String note;
+  String? imageUrl; // ← gambar di cloud
+  String? imagePath; // ← path lokal sementara
 
   OrderItem({
     required this.productId,
-    this.note = '',
     required this.qty,
     required this.unitPrice,
+    this.note = '',
+    this.imageUrl,
+    this.imagePath,
   });
 
   double get subtotal => qty * unitPrice;
 
-  OrderItem copyWith({String? note, int? qty, double? unitPrice}) => OrderItem(
+  OrderItem copyWith({
+    int? qty,
+    double? unitPrice,
+    String? note,
+    String? imageUrl,
+    String? imagePath,
+  }) => OrderItem(
     productId: productId,
-    note: note ?? this.note,
     qty: qty ?? this.qty,
     unitPrice: unitPrice ?? this.unitPrice,
+    note: note ?? this.note,
+    imageUrl: imageUrl ?? this.imageUrl,
+    imagePath: imagePath ?? this.imagePath,
   );
 }
