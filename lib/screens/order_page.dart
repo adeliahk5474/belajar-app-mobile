@@ -7,6 +7,7 @@ import '../controllers/order_controller.dart';
 import '../models/product.dart';
 import '../models/order_item.dart';
 import '../widgets/product_card_select.dart';
+import '../widgets/order_card.dart';
 import 'new_product_page.dart';
 
 class OrderPage extends StatefulWidget {
@@ -17,8 +18,10 @@ class OrderPage extends StatefulWidget {
 }
 
 class _OrderPageState extends State<OrderPage> {
-  final Map<String, OrderItem> _cart = {}; // productId -> OrderItem
+  /* cart sementara: productId → OrderItem */
+  final Map<String, OrderItem> _cart = {};
 
+  /* toggle pilih 1 produk */
   void _toggleSelect(Product p) {
     setState(() {
       if (_cart.containsKey(p.id)) {
@@ -29,77 +32,110 @@ class _OrderPageState extends State<OrderPage> {
     });
   }
 
-  void _checkout(BuildContext ctx) {
+  /* buat order dari cart */
+  Future<void> _checkout() async {
     if (_cart.isEmpty) return;
-    final orderCtrl = ctx.read<OrderController>();
-    final id = const Uuid().v4();
-    orderCtrl.addNew('Pembeli'); // nama default, bisa pakai dialog
-    for (var item in _cart.values) {
-      orderCtrl.addItem(id, item);
+    final orderCtrl = context.read<OrderController>();
+    final orderId = await orderCtrl.addNew('Pembeli');
+
+    for (final item in _cart.values) {
+      await orderCtrl.addItem(orderId, item);
     }
     setState(() => _cart.clear());
-    ScaffoldMessenger.of(
-      ctx,
-    ).showSnackBar(const SnackBar(content: Text('Order berhasil dibuat')));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Order berhasil dibuat')),
+    );
+  }
+
+  /* dialog tambah produk/menu baru */
+  Future<void> _addProduct() async {
+    final invCtrl = context.read<InventoryController>();
+    final p = await Navigator.push<Product>(
+      context,
+      MaterialPageRoute(builder: (_) => const NewProductPage()),
+    );
+    if (p != null) invCtrl.addFull(p);
   }
 
   @override
   Widget build(BuildContext context) {
-    final invCtrl = context.watch<InventoryController>();
-    final products = invCtrl.items;
+    final inv     = context.watch<InventoryController>().items;
+    final orders  = context.watch<OrderController>().items;   // untuk card daftar
+    final hasCart = _cart.isNotEmpty;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Tambah Penjualan'),
-        actions: [
-          TextButton.icon(
-            icon: const Icon(Icons.add, color: Colors.white),
-            label: const Text(
-              'New Product',
-              style: TextStyle(color: Colors.white),
-            ),
-            onPressed: () async {
-              final p = await Navigator.push<Product>(
-                context,
-                MaterialPageRoute(builder: (_) => const NewProductPage()),
-              );
-              if (p != null) invCtrl.addFull(p);
-            },
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Manajemen Order'),
+          bottom: const TabBar(
+            tabs: [
+              Tab(icon: Icon(Icons.add_shopping_cart), text: 'Buat Order'),
+              Tab(icon: Icon(Icons.receipt_long),      text: 'Riwayat'),
+            ],
           ),
-        ],
-      ),
-      body:
-          products.isEmpty
-              ? const Center(child: Text('Belum ada produk'))
-              : ListView.builder(
-                itemCount: products.length,
-                itemBuilder: (_, i) {
-                  final p = products[i];
-                  return ProductCardSelect(
-                    product: p,
-                    selected: _cart.containsKey(p.id),
-                    onTap: () => _toggleSelect(p),
-                    onDelete: () {
-                      invCtrl.remove(p.id);
-                      setState(() => _cart.remove(p.id));
-                    },
-                  );
-                },
-              ),
-      bottomNavigationBar: BottomAppBar(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        color: Colors.white,
-        child: Row(
-          children: [
-            IconButton(
-              icon: const Icon(Icons.shopping_cart, size: 28),
-              color: _cart.isNotEmpty ? Colors.teal : Colors.grey,
-              onPressed: _cart.isNotEmpty ? () => _checkout(context) : null,
-            ),
-            const Spacer(),
-            Text('Item dipilih: ${_cart.length}'),
+          actions: [
+            IconButton(icon: const Icon(Icons.add), onPressed: _addProduct),
           ],
         ),
+
+        /* ---------- TAB VIEW ---------- */
+        body: TabBarView(
+          children: [
+            /* ── Tab 0: pilih produk ── */
+            inv.isEmpty
+                ? const Center(child: Text('Belum ada produk'))
+                : ListView.builder(
+                    itemCount: inv.length,
+                    itemBuilder: (_, i) {
+                      final p = inv[i];
+                      return ProductCardSelect(
+                        product: p,
+                        selected: _cart.containsKey(p.id),
+                        onTap:  () => _toggleSelect(p),
+                        onDelete: () {
+                          context.read<InventoryController>().remove(p.id);
+                          setState(() => _cart.remove(p.id));
+                        },
+                      );
+                    },
+                  ),
+
+            /* ── Tab 1: riwayat order ── */
+            orders.isEmpty
+                ? const Center(child: Text('Belum ada order'))
+                : PageView.builder(
+                    controller: PageController(viewportFraction: 0.9),
+                    itemCount: orders.length,
+                    itemBuilder: (_, i) => OrderCard(order: orders[i]),
+                  ),
+          ],
+        ),
+
+        /* ---------- FAB ---------- */
+        floatingActionButton: hasCart
+            ? FloatingActionButton(
+                onPressed: _checkout,
+                tooltip: 'Selesaikan Order',
+                child: const Icon(Icons.shopping_cart_checkout_rounded),
+              )
+            : null,
+
+        bottomNavigationBar: hasCart
+            ? BottomAppBar(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
+                  children: [
+                    Text('Item dipilih: ${_cart.length}'),
+                    const Spacer(),
+                    ElevatedButton(
+                      onPressed: _checkout,
+                      child: const Text('Checkout'),
+                    ),
+                  ],
+                ),
+              )
+            : null,
       ),
     );
   }

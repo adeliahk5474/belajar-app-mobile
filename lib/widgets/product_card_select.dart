@@ -1,6 +1,6 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import '../models/product.dart';
+import 'app_image.dart';
 
 class ProductCardSelect extends StatelessWidget {
   final Product product;
@@ -18,44 +18,20 @@ class ProductCardSelect extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final img = product.imageUrl;
-    final local = product.imagePath;
-
-    Widget imageWidget;
-    if (img != null && img.isNotEmpty) {
-      imageWidget = Image.network(
-        img,
-        width: 70,
-        height: 70,
-        fit: BoxFit.cover,
-      );
-    } else if (local != null && local.isNotEmpty) {
-      imageWidget = Image.file(
-        File(local),
-        width: 70,
-        height: 70,
-        fit: BoxFit.cover,
-      );
-    } else {
-      imageWidget = Container(
-        width: 70,
-        height: 70,
-        color: Colors.grey.shade300,
-        child: const Icon(Icons.image_not_supported),
-      );
-    }
-
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
       child: ListTile(
-        leading: ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: imageWidget,
+        leading: AppImage(
+          filePath  : product.imagePath,
+          networkUrl: product.imageUrl,
+          width     : 72,
+          height    : 72,
+          radius    : BorderRadius.circular(8),
         ),
         title: Text(product.name),
         subtitle: Text(
-          'Stock: ${product.stockQty}  •  Rp${product.price.toStringAsFixed(0)}',
+          'Stock: ${product.stockQty} • Rp${product.price.toStringAsFixed(0)}',
         ),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,

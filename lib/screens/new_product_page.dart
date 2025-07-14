@@ -1,13 +1,15 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 
+import '../controllers/inventory_controller.dart';
 import '../models/product.dart';
 import '../models/recipe_item.dart';
-import '../controllers/inventory_controller.dart';
+import '../widgets/app_image.dart';
 
 class NewProductPage extends StatefulWidget {
   const NewProductPage({super.key});
@@ -17,28 +19,27 @@ class NewProductPage extends StatefulWidget {
 }
 
 class _NewProductPageState extends State<NewProductPage> {
-  final _nameCtl = TextEditingController();
+  final _nameCtl  = TextEditingController();
   final _priceCtl = TextEditingController();
   XFile? _pickedImage;
 
   final _ingredients = <RecipeItem>[];
 
-  // ───────────────────────────────── image picker
+  /* ──────────────────────────── IMAGE ──────────────────────────── */
   Future<void> _pickImage() async {
     final img = await ImagePicker().pickImage(source: ImageSource.gallery);
     if (img != null) setState(() => _pickedImage = img);
   }
 
-  // ───────────────────────────────── upload image ke firebase
   Future<String?> _uploadImageToFirebase(String productId) async {
     if (_pickedImage == null) return null;
     final file = File(_pickedImage!.path);
-    final ref = FirebaseStorage.instance.ref().child('products/$productId.jpg');
+    final ref  = FirebaseStorage.instance.ref('products/$productId.jpg');
     await ref.putFile(file);
-    return await ref.getDownloadURL();
+    return ref.getDownloadURL();
   }
 
-  // ───────────────────────────────── tambah bahan
+  /* ──────────────────────────── INGREDIENTS ──────────────────────────── */
   Future<void> _addIngredientDialog() async {
     final inv = context.read<InventoryController>().items;
     String? selectedId;
@@ -46,72 +47,58 @@ class _NewProductPageState extends State<NewProductPage> {
 
     await showDialog(
       context: context,
-      builder:
-          (_) => AlertDialog(
-            title: const Text('Tambah Bahan'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                DropdownButtonFormField<String>(
-                  items:
-                      inv
-                          .map(
-                            (p) => DropdownMenuItem(
-                              value: p.id,
-                              child: Text(p.name),
-                            ),
-                          )
-                          .toList(),
-                  onChanged: (v) => selectedId = v,
-                  decoration: const InputDecoration(labelText: 'Pilih bahan'),
-                ),
-                TextField(
-                  controller: qtyCtl,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Qty per produk',
-                  ),
-                ),
-              ],
+      builder: (_) => AlertDialog(
+        title: const Text('Tambah Bahan'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            DropdownButtonFormField<String>(
+              items: inv
+                  .map((p) => DropdownMenuItem(value: p.id, child: Text(p.name)))
+                  .toList(),
+              onChanged: (v) => selectedId = v,
+              decoration: const InputDecoration(labelText: 'Pilih bahan'),
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Batal'),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  if (selectedId != null) {
-                    _ingredients.add(
-                      RecipeItem(
-                        inventoryId: selectedId!,
-                        qty: int.tryParse(qtyCtl.text) ?? 0,
-                      ),
-                    );
-                    setState(() {});
-                  }
-                  Navigator.pop(context);
-                },
-                child: const Text('Tambah'),
-              ),
-            ],
+            TextField(
+              controller: qtyCtl,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(labelText: 'Qty per produk'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
+          ElevatedButton(
+            onPressed: () {
+              if (selectedId != null) {
+                _ingredients.add(RecipeItem(
+                  inventoryId: selectedId!,
+                  qty: int.tryParse(qtyCtl.text) ?? 0,
+                ));
+                setState(() {});
+              }
+              Navigator.pop(context);
+            },
+            child: const Text('Tambah'),
           ),
+        ],
+      ),
     );
   }
 
-  // ───────────────────────────────── simpan produk baru
+  /* ──────────────────────────── SIMPAN ──────────────────────────── */
   Future<void> _save() async {
     if (_nameCtl.text.trim().isEmpty ||
         _priceCtl.text.trim().isEmpty ||
         _ingredients.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Lengkapi semua data')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Lengkapi semua data')),
+      );
       return;
     }
 
-    final id = const Uuid().v4();
-    final imageUrl = await _uploadImageToFirebase(id);
+    final id        = const Uuid().v4();
+    final imageUrl  = await _uploadImageToFirebase(id);
 
     final product = Product(
       id: id,
@@ -126,6 +113,7 @@ class _NewProductPageState extends State<NewProductPage> {
       imageUrl: imageUrl,
     );
 
+    if (!mounted) return;
     Navigator.pop(context, product);
   }
 
@@ -136,7 +124,7 @@ class _NewProductPageState extends State<NewProductPage> {
     super.dispose();
   }
 
-  // ───────────────────────────────── UI
+  /* ──────────────────────────── UI ──────────────────────────── */
   @override
   Widget build(BuildContext context) {
     final inv = context.watch<InventoryController>().items;
@@ -148,19 +136,13 @@ class _NewProductPageState extends State<NewProductPage> {
         children: [
           GestureDetector(
             onTap: _pickImage,
-            child:
-                _pickedImage == null
-                    ? Container(
-                      height: 150,
-                      color: Colors.grey.shade300,
-                      alignment: Alignment.center,
-                      child: const Text('Tap untuk pilih gambar'),
-                    )
-                    : Image.file(
-                      File(_pickedImage!.path),
-                      height: 150,
-                      fit: BoxFit.cover,
-                    ),
+            child: AppImage(
+              filePath   : _pickedImage?.path,
+              networkUrl : null,
+              height     : 150,
+              width      : double.infinity,
+              radius     : BorderRadius.circular(12),
+            ),
           ),
           const SizedBox(height: 16),
           TextField(
@@ -169,20 +151,17 @@ class _NewProductPageState extends State<NewProductPage> {
           ),
           TextField(
             controller: _priceCtl,
-            decoration: const InputDecoration(labelText: 'Harga jual'),
             keyboardType: TextInputType.number,
+            decoration: const InputDecoration(labelText: 'Harga jual'),
           ),
           const SizedBox(height: 16),
           Row(
             children: [
-              const Text(
-                'Bahan:',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
+              const Text('Bahan:', style: TextStyle(fontWeight: FontWeight.bold)),
               const Spacer(),
               TextButton.icon(
                 onPressed: inv.isEmpty ? null : _addIngredientDialog,
-                icon: const Icon(Icons.add),
+                icon : const Icon(Icons.add),
                 label: const Text('Tambah bahan'),
               ),
             ],
@@ -190,8 +169,8 @@ class _NewProductPageState extends State<NewProductPage> {
           ..._ingredients.map((r) {
             final p = inv.firstWhere((e) => e.id == r.inventoryId);
             return ListTile(
-              title: Text(p.name),
-              trailing: Text('${r.qty} ${p.unit}'),
+              title    : Text(p.name),
+              trailing : Text('${r.qty} ${p.unit}'),
               onLongPress: () => setState(() => _ingredients.remove(r)),
             );
           }),
